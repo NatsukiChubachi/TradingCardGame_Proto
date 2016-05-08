@@ -1,17 +1,17 @@
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/* global _gGame */
+_gGame = null;
+_gCommon = null;
 
 // TCGトップクラス
-var CTcgTop = function() {
+var CTcgTop = function() 
+{
     
     // 初期化処理
     this.initialize = function( _game ) 
     {
+        // グローバル変数
+        _gGame = _game;
+        _gCommon = new CCommon();
+        
         // シーン作成
         this._game = _game;
         this._scene = new Scene();
@@ -19,6 +19,7 @@ var CTcgTop = function() {
         // 背景色
         this._scene.backgroundColor = "#999999";
         
+        /*
         // ラベル作成
         var lblMsg = new Label( "TCG Top Page." );
         lblMsg.x = 10;
@@ -26,10 +27,12 @@ var CTcgTop = function() {
         lblMsg.font = "16px cursive";
         lblMsg.textAlign = "left";
         this._scene.addChild( lblMsg );
+        */
 
         // 作成したシーンを追加する
         this._game.pushScene( this._scene );
         
+        // 新しいシーンの挿入
         var _newScene = new CTcgBattleField();
         _newScene.initialize( _gGame );
     };
