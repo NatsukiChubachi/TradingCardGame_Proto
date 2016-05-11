@@ -28,8 +28,8 @@ var CTcgBattleField = function()
         this._params._iOwnerState = CTcgBattleField.OwnerNumber.iPlayerA;
         this._params._iTurnState  = CTcgBattleField.TurnState.iBattleStart;
         this._params._bStateMove = false;
-        this._params._SPlayerA_Params = new CTcgBattlePlayerParams();
-        this._params._SPlayerB_Params = new CTcgBattlePlayerParams();
+        this._params._SPlayerA_Params = new CTcgBattlePlayerParams( this._scene );
+        this._params._SPlayerB_Params = new CTcgBattlePlayerParams( this._scene );
 
         this._params._SPlayerA_Params._groupCardLibrary.x = 400;
         this._params._SPlayerA_Params._groupCardLibrary.y = 360;
@@ -149,6 +149,10 @@ var CTcgBattleField = function()
                             });
                     _params._scene.addChild( _tmp );
 
+                    // 山札からカードを一枚引く
+                    this._params._SPlayerA_Params.PicCardFromLibrary();
+                    this._params._SPlayerA_Params.ReplaceCardHand();
+                    
                     // 次のステートに進む
                     _params._iTurnState = CTcgBattleField.TurnState.iMainState;
                     _params._bStateMove = false;
