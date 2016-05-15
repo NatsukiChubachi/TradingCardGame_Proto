@@ -1,4 +1,125 @@
 
+var _gCardColorCost = {};
+_gCardColorCost = {
+    0: "赤",
+    1: "青",
+    2: "緑",
+    3: "黄",
+    4: "白",
+    5: "黒"
+};
+
+var _gCardCategory = {};
+_gCardCategory = {
+    0: "スピリット",
+    1: "マジック",
+    2: "エンチャント",
+    3: "ブレイヴ"
+};
+
+var _gCardData = {};
+_gCardData = {
+    0: {
+        _iCategory: 0,
+        _iColorCost: [ ],
+        _iGrayCost: 1,
+        _iLife: 1,
+        _iAtk: 1,
+        _sName: "ソルジャー0",
+        _sText: "テスト用カード0"
+    },
+    1: {
+        _iCategory: 0,
+        _iColorCost: [ ],
+        _iGrayCost: 1,
+        _iLife: 1,
+        _iAtk: 1,
+        _sName: "ソルジャー1",
+        _sText: "テスト用カード1"
+    },
+    2: {
+        _iCategory: 0,
+        _iColorCost: [ ],
+        _iGrayCost: 1,
+        _iLife: 1,
+        _iAtk: 1,
+        _sName: "ソルジャー2",
+        _sText: "テスト用カード2"
+    },
+    3: {
+        _iCategory: 0,
+        _iColorCost: [ ],
+        _iGrayCost: 1,
+        _iLife: 1,
+        _iAtk: 1,
+        _sName: "ソルジャー3",
+        _sText: "テスト用カード3"
+    },
+    4: {
+        _iCategory: 0,
+        _iColorCost: [ ],
+        _iGrayCost: 1,
+        _iLife: 1,
+        _iAtk: 1,
+        _sName: "ソルジャー4",
+        _sText: "テスト用カード4"
+    },
+    5: {
+        _iCategory: 0,
+        _iColorCost: [ ],
+        _iGrayCost: 1,
+        _iLife: 1,
+        _iAtk: 1,
+        _sName: "ソルジャー5",
+        _sText: "テスト用カード5"
+    },
+    6: {
+        _iCategory: 0,
+        _iColorCost: [ ],
+        _iGrayCost: 1,
+        _iLife: 1,
+        _iAtk: 1,
+        _sName: "ソルジャー6",
+        _sText: "テスト用カード6"
+    },
+    7: {
+        _iCategory: 0,
+        _iColorCost: [ ],
+        _iGrayCost: 1,
+        _iLife: 1,
+        _iAtk: 1,
+        _sName: "ソルジャー7",
+        _sText: "テスト用カード7"
+    },
+    8: {
+        _iCategory: 0,
+        _iColorCost: [ ],
+        _iGrayCost: 1,
+        _iLife: 1,
+        _iAtk: 1,
+        _sName: "ソルジャー8",
+        _sText: "テスト用カード8"
+    },
+    9: {
+        _iCategory: 0,
+        _iColorCost: [ ],
+        _iGrayCost: 1,
+        _iLife: 1,
+        _iAtk: 1,
+        _sName: "ソルジャー9",
+        _sText: "テスト用カード9"
+    },
+    10: {
+        _iCategory: 0,
+        _iColorCost: [ ],
+        _iGrayCost: 1,
+        _iLife: 1,
+        _iAtk: 1,
+        _sName: "ソルジャー10",
+        _sText: "テスト用カード10"
+    }
+};
+
 /**
  * TCGバトルプレイヤーパラメータクラス
  * @returns {CTcgBattlePlayerParams}
@@ -19,6 +140,8 @@ var CTcgBattlePlayerParams = function( parent )
     this._groupCardLibrary = _gCommon.CreateGroup( 0, 0 );  // 山札グループ
     this._groupCardHand = _gCommon.CreateGroup( 0, 0 );     // 手札グループ
     this._groupCardTrash = _gCommon.CreateGroup( 0, 0 );    // 捨札グループ
+    this._groupCoreField = _gCommon.CreateGroup( 0, 0 );    // フィールドコア 
+    this._groupLifeCounter = _gCommon.CreateGroup( 0, 0 );  // ライフカウンター
 
     this._lblRemainLibrary = null;
     
@@ -31,7 +154,11 @@ var CTcgBattlePlayerParams = function( parent )
     
     this.ShuffleLibrary();
     this.InitializeCardLibrary();
+    this.InitializeCardTrash();
     this.InitializeCardHand();
+    this.InitializeCoreField();
+    this.InitializeCardField();
+    this.InitializeLifeCounter();
     
     return this;
 };
@@ -97,17 +224,82 @@ CTcgBattlePlayerParams.prototype.PicCardFromLibrary = function()
     var _tmpGroup;
     var _img;
     var _tmp;
+    var _tmp
     
-    _tmpGroup = _gCommon.CreateGroup( _i * 0, 0 );
+    _tmpGroup = _gCommon.CreateGroup( -200, 0 );
 
     _img = _gCommon.CreateSurface( 50, 50 );
     _tmp = _gCommon.CreateSprite( 0, 0, 50, 50, _img );
     _tmpGroup.addChild( _tmp );
+    var _tmpSprite = _tmp;
 
     _tmp = _gCommon.CreateLabel( 0, 0, "" + this._CardHand[ _i ] );
     _tmpGroup.addChild( _tmp );
-
+    
     this._groupCardHand.addChild( _tmpGroup );
+
+    _tmpGroup._params = {};
+    _tmpGroup._params._iCardId = this._CardHand[ _i ];
+
+    _tmpSprite._parent = _tmpGroup;
+    _tmpSprite._groupCardField = this._groupCardField;
+    _tmpSprite.addEventListener("touchstart", function()
+    {
+        if ( _gManage._params._bOpenCard === true )
+        {
+            return;
+        }
+        
+        _gManage._params._bOpenCard = true;
+        
+        // alert("touch card");
+        var _parent = this._parent;
+        
+        var _img, _tmp;
+        var _tmpGroup = _gCommon.CreateGroup( 100, -100 );
+        
+        _img = _gCommon.CreateSurface( 150, 150 );
+        _tmp = _gCommon.CreateSprite( 0, 0, 150, 150, _img );
+        _tmpGroup.addChild( _tmp );
+        var _tmpSprite = _tmp;
+        
+        var iCardId = _parent._params._iCardId;
+        var sName = _gCardData[ iCardId ]._sName;
+        var iCategory = _gCardData[ iCardId ]._iCategory;
+        var iLife = _gCardData[ iCardId ]._iLife;
+        var iAtk = _gCardData[ iCardId ]._iAtk;
+        var sText = _gCardData[ iCardId ]._sText;
+        var iGrayCost = _gCardData[ iCardId ]._iGrayCost;
+        
+        _tmp = _gCommon.CreateLabel( 0, 0, "id: " + iCardId );
+        _tmpGroup.addChild( _tmp );
+        
+        _tmp = _gCommon.CreateLabel( 0, 20, "name: " + sName );
+        _tmpGroup.addChild( _tmp );
+        
+        _tmp = _gCommon.CreateLabel( 0, 40, "種別: " + _gCardCategory[ iCategory ] );
+        _tmpGroup.addChild( _tmp );
+        
+        _tmp = _gCommon.CreateLabel( 0, 60, "コスト: " + iGrayCost );
+        _tmpGroup.addChild( _tmp );
+        
+        _tmp = _gCommon.CreateLabel( 0, 80, "" + iAtk + " / " + iLife );
+        _tmpGroup.addChild( _tmp );
+        
+        _tmp = _gCommon.CreateLabel( 0, 100, sText );
+        _tmpGroup.addChild( _tmp );
+        
+        this._groupCardField.addChild( _tmpGroup );
+        
+        _tmpSprite._params = {};
+        _tmpSprite._params._group = _tmpGroup;
+        _tmpSprite.addEventListener( "touchstart", function(){
+            alert("Close Card");
+            _gManage._params._bOpenCard = false;
+            
+            //_gManage._params._scene.removeChild( this._groupCardField );
+        });
+    });
 };
 
 /**
@@ -167,3 +359,82 @@ CTcgBattlePlayerParams.prototype.ReplaceCardHand = function()
         _tmp.tl.delay(i*5).moveTo( i*(300/iCount), 0, 15 );
     }
 };
+
+/**
+ * コア初期化
+ * @returns {undefined}
+ */
+CTcgBattlePlayerParams.prototype.InitializeCoreField = function()
+{
+    var iCount = this._CoreReserve;
+    var tmp;
+    var img;
+    
+    for ( var i = 0; i < iCount; i++ )
+    {
+        img = _gCommon.CreateSurface( 16, 16 );
+        tmp = _gCommon.CreateSprite( (20*i), (20), 16, 16, img );
+        this._groupCoreField.addChild( tmp );
+    }
+};
+
+/**
+ * カードフィールド初期化
+ * @returns {undefined}
+ */
+CTcgBattlePlayerParams.prototype.InitializeCardField = function()
+{
+    var tmp = null;
+
+    var img = _gCommon.CreateSurface( 280, 80 );
+    
+    tmp = _gCommon.CreateSprite( 0, 0, 280, 80, img );
+    this._groupCardField.addChild( tmp );
+    
+    tmp = _gCommon.CreateLabel( 0, 0, "CardField" );
+    this._groupCardField.addChild( tmp );
+};
+
+/**
+ * 捨て札初期化
+ * @returns {undefined}
+ */
+CTcgBattlePlayerParams.prototype.InitializeCardTrash = function()
+{
+    var img = _gCommon.CreateSurface( 60, 60 );
+    var tmp = null;
+
+    tmp = _gCommon.CreateSprite( 0, 0, 60, 60, img );
+    this._groupCardTrash.addChild( tmp );
+    
+    tmp = _gCommon.CreateLabel( 0, 0, "CardTrash" );
+    this._groupCardTrash.addChild( tmp );
+};
+
+/**
+ * プレイヤーライフ表示初期化
+ * @returns {undefined}
+ */
+CTcgBattlePlayerParams.prototype.InitializeLifeCounter = function()
+{
+    var tmp = null;
+    var img = _gCommon.CreateSurface( 40, 40 );
+    
+    tmp = _gCommon.CreateSprite( 0, 0, 40, 40, img );
+    this._groupLifeCounter.addChild( tmp );
+    
+    tmp = _gCommon.CreateLabel( 0, 0, "Life: " );
+    this._groupLifeCounter.addChild( tmp );
+
+    tmp = _gCommon.CreateLabel( 0, 20, this._iLife_Now );
+    this._groupLifeCounter.addChild( tmp );
+    this._groupLifeCounter._lblLife = tmp;
+    
+};
+
+
+
+
+
+
+

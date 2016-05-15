@@ -1,3 +1,4 @@
+var _gManage = null;
 
 /**
  * TCG戦場クラス 
@@ -31,13 +32,43 @@ var CTcgBattleField = function()
         this._params._SPlayerA_Params = new CTcgBattlePlayerParams( this._scene );
         this._params._SPlayerB_Params = new CTcgBattlePlayerParams( this._scene );
 
-        this._params._SPlayerA_Params._groupCardLibrary.x = 400;
-        this._params._SPlayerA_Params._groupCardLibrary.y = 360;
-        this._scene.addChild( this._params._SPlayerA_Params._groupCardLibrary );
+        var tmp = null;
+
+        // エンティティの追加（山札）
+        tmp = this._params._SPlayerA_Params._groupCardLibrary;
+        tmp.x = 400;
+        tmp.y = 220;
+        this._scene.addChild( tmp );
         
-        this._params._SPlayerA_Params._groupCardHand.x = 100;
-        this._params._SPlayerA_Params._groupCardHand.y = 400;
-        this._scene.addChild( this._params._SPlayerA_Params._groupCardHand );
+        // エンティティの追加（捨札）
+        tmp = this._params._SPlayerA_Params._groupCardTrash;
+        tmp.x = 400;
+        tmp.y = 280;
+        this._scene.addChild( tmp );
+        
+        // エンティティの追加（手札）
+        tmp = this._params._SPlayerA_Params._groupCardHand;
+        tmp.x = 100;
+        tmp.y = 400;
+        this._scene.addChild( tmp );
+        
+        // エンティティの追加（コア）
+        tmp = this._params._SPlayerA_Params._groupCoreField;
+        tmp.x = 400;
+        tmp.y = 370;
+        this._scene.addChild( tmp );
+        
+        // エンティティの追加（フィールド）
+        tmp = this._params._SPlayerA_Params._groupCardField;
+        tmp.x = 100;
+        tmp.y = 300;
+        this._scene.addChild( tmp );
+        
+        // エンティティの追加（フィールド）
+        tmp = this._params._SPlayerA_Params._groupLifeCounter;
+        tmp.x = 50;
+        tmp.y = 300;
+        this._scene.addChild( tmp );
         
         this._params._SPlayerB_Params._groupCardLibrary.x = 50;
         this._params._SPlayerB_Params._groupCardLibrary.y = 80;
@@ -55,6 +86,10 @@ var CTcgBattleField = function()
         this._lblManager = _gCommon.CreateGroup( -100, -100 );
         this._lblManager._params = this._params;
         this._scene.addChild( this._lblManager );
+        
+        _gManage = this._lblManager;
+        _gManage._params._scene = this._scene;
+        _gManage._params._bOpenCard = false;
         
         // マネージャ処理
         // 毎ループ判定処理
@@ -371,7 +406,7 @@ var CTcgBattleField = function()
         this.CreateChip( 410, 150 - 60 );
         */
        
-        tmp = this.CreateChip( 450, 370 );
+        tmp = this.CreateChip( 450, 200 );
         tmp._params = this._params;
         tmp.addEventListener("touchstart", function() 
         {
