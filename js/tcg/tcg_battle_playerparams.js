@@ -241,6 +241,7 @@ CTcgBattlePlayerParams.prototype.PicCardFromLibrary = function()
     _tmpGroup._params = {};
     _tmpGroup._params._iCardId = this._CardHand[ _i ];
 
+    // カードクリック時のイベント処理
     _tmpSprite._parent = _tmpGroup;
     _tmpSprite._groupCardField = this._groupCardField;
     _tmpSprite.addEventListener("touchstart", function()
@@ -256,7 +257,7 @@ CTcgBattlePlayerParams.prototype.PicCardFromLibrary = function()
         var _parent = this._parent;
         
         var _img, _tmp;
-        var _tmpGroup = _gCommon.CreateGroup( 100, -100 );
+        var _tmpGroup = _gCommon.CreateGroup( -50, -100 );
         
         _img = _gCommon.CreateSurface( 150, 150 );
         _tmp = _gCommon.CreateSprite( 0, 0, 150, 150, _img );
@@ -291,14 +292,28 @@ CTcgBattlePlayerParams.prototype.PicCardFromLibrary = function()
         
         this._groupCardField.addChild( _tmpGroup );
         
+        // 開かれたカードを再度クリックで閉じるようにする
         _tmpSprite._params = {};
         _tmpSprite._params._group = _tmpGroup;
+        _tmpSprite._params._parent = this._groupCardField;
         _tmpSprite.addEventListener( "touchstart", function(){
-            alert("Close Card");
+            //alert("Close Card");
             _gManage._params._bOpenCard = false;
-            
-            //_gManage._params._scene.removeChild( this._groupCardField );
+            this._params._parent.removeChild( this._params._group );
         });
+        
+        // todo: 状況によって選択できるかどうか変化する？
+        _tmp = _gCommon.CreateSprite( 170, 10, 50, 50, _gCommon.CreateSurface( 50, 50 ) )
+        _tmp._params = {};
+        _tmp._params._group = _tmpGroup;
+        _tmp._params._parent = this._groupCardField;
+        _tmpGroup.addChild( _tmp );
+        _tmp.addEventListener( "touchstart", function(){
+            alert("AAAA");
+            _gManage._params._bOpenCard = false;
+            this._params._parent.removeChild( this._params._group );
+        });
+        
     });
 };
 
