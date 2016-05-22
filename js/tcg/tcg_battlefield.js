@@ -27,7 +27,7 @@ var CTcgBattleField = function()
         this._params = {};
         this._params._scene = this._scene;
         this._params._iOwnerState = CTcgBattleField.OwnerNumber.iPlayerA;
-        this._params._iTurnState  = CTcgBattleField.TurnState.iBattleStart;
+        this._params._iTurnState  = CTcgBattleField.TurnState.iBattleStart_Start;
         this._params._bStateMove = false;
         this._params._SPlayerA_Params = new CTcgBattlePlayerParams( this._scene );
         this._params._SPlayerB_Params = new CTcgBattlePlayerParams( this._scene );
@@ -83,17 +83,17 @@ var CTcgBattleField = function()
         this._lblLifeB = this.CreateLabel( 10, 470, "Player_B Life = " + this._params._SPlayerB_Params._iLife_Now );
 
         // ゲームマネージャーの作成
-        this._lblManager = _gCommon.CreateGroup( -100, -100 );
-        this._lblManager._params = this._params;
-        this._scene.addChild( this._lblManager );
+        this._manager = _gCommon.CreateGroup( -100, -100 );
+        this._manager._params = this._params;
+        this._scene.addChild( this._manager );
         
-        _gManage = this._lblManager;
+        _gManage = this._manager;
         _gManage._params._scene = this._scene;
         _gManage._params._bOpenCard = false;
         
         // マネージャ処理
         // 毎ループ判定処理
-        this._lblManager.addEventListener("enterframe", function()
+        this._manager.addEventListener("enterframe", function()
         {
             var _tmp;
             var _params = this._params;
@@ -109,12 +109,13 @@ var CTcgBattleField = function()
                  * 先攻となるプレイヤーがオーナーとなり、リフレッシュステートからスタートする
                  * 初めのターンではドローステートで山札からカードをドロー出来ない
                  */
-            case CTcgBattleField.TurnState.iBattleStart:
+            case CTcgBattleField.TurnState.iBattleStart_Start:
                 {
                     // ターンステート表記ラベル
                     _tmp = _gCommon.CreateLabel( -100, -100, "BattleStart" );
                     _tmp._params = {};
                     _tmp._params._scene = _params._scene;
+                    _tmp._params._manager = this;
                     _tmp.tl.clear();
                     _tmp.tl.moveTo( -100, 200, 0 )
                             .moveTo( 250, 200, 30 )
@@ -122,14 +123,19 @@ var CTcgBattleField = function()
                             .moveTo( 500, 200, 30 )
                             .then(function(){
                                 this._params._scene.removeChild( this );
+
+                                // 次のステートに進む
+                                var _manager = this._params._manager;
+                                _manager._params._iTurnState = CTcgBattleField.TurnState.iRefreshState_Start;
                             });
                     _params._scene.addChild( _tmp );
 
-                    // 次のステートに進む
-                    _params._iTurnState = CTcgBattleField.TurnState.iRefreshState;
+                    _params._iTurnState = CTcgBattleField.TurnState.iRefreshState_End;
                 }
                 break;
-                
+            case CTcgBattleField.TurnState.iBattleStart_End:
+                break;
+
                 /**
                  * リフレッシュステート
                  * このステート開始時にスピリット（仮称）は回復する（行動可能になる）
@@ -138,8 +144,7 @@ var CTcgBattleField = function()
                  * 
                  * このステートをトリガーとして効果を発揮するカードが存在する
                  */
-            case CTcgBattleField.TurnState.iRefreshState:
-                if ( this._params._bStateMove )
+            case CTcgBattleField.TurnState.iRefreshState_Start:
                 {
                     // ターンステート表記ラベル
                     _tmp = _gCommon.CreateLabel( -100, -100, "RefreshState" );
@@ -155,20 +160,29 @@ var CTcgBattleField = function()
                             });
                     _params._scene.addChild( _tmp );
 
+                    // リフレッシュ処理
+                    
                     // 次のステートに進む
-                    _params._iTurnState = CTcgBattleField.TurnState.iDrawState;
+                    _params._iTurnState = CTcgBattleField.TurnState.iRefreshState_End;
                     _params._bStateMove = false;
                 }
                 break;
-                
+            case CTcgBattleField.TurnState.iRefreshState_End:
+                if ( this._params._bStateMove )
+                {
+                    // 次のステートに進む
+                    _params._iTurnState = CTcgBattleField.TurnState.iDrawState_Start;
+                    _params._bStateMove = false;
+                }
+                break;
+
                 /**
                  * ドローステート
                  * このステートの開始時に山札からカードを一枚引く
                  * 
                  * このステートをトリガーとして効果を発揮するカードが存在する
                  */
-            case CTcgBattleField.TurnState.iDrawState:
-                if ( this._params._bStateMove )
+            case CTcgBattleField.TurnState.iDrawState_Start:
                 {
                     // ターンステート表記ラベル
                     _tmp = _gCommon.CreateLabel( -100, -100, "DrawState" );
@@ -185,15 +199,36 @@ var CTcgBattleField = function()
                     _params._scene.addChild( _tmp );
 
                     // 山札からカードを一枚引く
+                    /*
                     this._params._SPlayerA_Params.PicCardFromLibrary();
                     this._params._SPlayerA_Params.ReplaceCardHand();
+                            */
+                    if ( _params._iOwnerState === CTcgBattleField.OwnerNumber.iPlayerA )
+                    {
+                        this._params._SPlayerA_Params.PicCardFromLibrary();
+                        this._params._SPlayerA_Params.ReplaceCardHand();
+                    }
+                    else
+                    {
+                        this._params._SPlayerB_Params.PicCardFromLibrary();
+                        this._params._SPlayerB_Params.ReplaceCardHand();
+                    }
                     
                     // 次のステートに進む
-                    _params._iTurnState = CTcgBattleField.TurnState.iMainState;
+                    _params._iTurnState = CTcgBattleField.TurnState.iDrawState_End;
                     _params._bStateMove = false;
                 }
                 break;
                 
+            case CTcgBattleField.TurnState.iDrawState_End:
+                if ( this._params._bStateMove )
+                {
+                    // 次のステートに進む
+                    _params._iTurnState = CTcgBattleField.TurnState.iMainState_Start;
+                    _params._bStateMove = false;
+                }
+                break;
+
                 /**
                  * メインステート
                  * このステート中オーナーのプレイヤーはコアを消費して手札／場から以下の操作を行うことができる
@@ -205,8 +240,7 @@ var CTcgBattleField = function()
                  * 
                  * このステートをトリガーとして効果を発揮するカードが存在する
                  */
-            case CTcgBattleField.TurnState.iMainState:
-                if ( this._params._bStateMove )
+            case CTcgBattleField.TurnState.iMainState_Start:
                 {
                     // ターンステート表記ラベル
                     _tmp = _gCommon.CreateLabel( -100, -100, "MainState" );
@@ -221,13 +255,22 @@ var CTcgBattleField = function()
                                 this._params._scene.removeChild( this );
                             });
                     _params._scene.addChild( _tmp );
-
+                    
                     // 次のステートに進む
-                    _params._iTurnState = CTcgBattleField.TurnState.iBattleState;
+                    _params._iTurnState = CTcgBattleField.TurnState.iMainState_End;
                     _params._bStateMove = false;
                 }
                 break;
                 
+            case CTcgBattleField.TurnState.iMainState_End:
+                if ( this._params._bStateMove )
+                {
+                    // 次のステートに進む
+                    _params._iTurnState = CTcgBattleField.TurnState.iBattleState_Start;
+                    _params._bStateMove = false;
+                }
+                break;
+            
                 /**
                  * バトルステート
                  * このステート中オーナーとなるプレイヤーは以下の操作を行うことができる
@@ -236,8 +279,7 @@ var CTcgBattleField = function()
                  * 
                  * このステートをトリガーとして効果を発揮するカードが存在する
                  */
-            case CTcgBattleField.TurnState.iBattleState:
-                if ( this._params._bStateMove )
+            case CTcgBattleField.TurnState.iBattleState_Start:
                 {
                     // ターンステート表記ラベル
                     _tmp = _gCommon.CreateLabel( -100, -100, "BattleState" );
@@ -254,11 +296,19 @@ var CTcgBattleField = function()
                     _params._scene.addChild( _tmp );
                                 
                     // 次のステートに進む        
+                    _params._iTurnState = CTcgBattleField.TurnState.iBattleState_End;
+                    _params._bStateMove = false;
+                }
+                break;
+            case CTcgBattleField.TurnState.iBattleState_End:
+                 if ( this._params._bStateMove )
+                 {
+                    // 次のステートに進む        
                     _params._iTurnState = CTcgBattleField.TurnState.iEndState;
                     _params._bStateMove = false;
                 }
                 break;
-                
+
                 // エンドステート
                 /**
                  * エンドステート
@@ -285,7 +335,7 @@ var CTcgBattleField = function()
                     _params._scene.addChild( _tmp );
                                       
                     // 次のステートに進む
-                    _params._iTurnState = CTcgBattleField.TurnState.iRefreshState;
+                    _params._iTurnState = CTcgBattleField.TurnState.iRefreshState_Start;
                     _params._bStateMove = false;
                     
                     if ( _params._iOwnerState === CTcgBattleField.OwnerNumber.iPlayerA )
@@ -321,19 +371,24 @@ var CTcgBattleField = function()
             
             switch( this._params._iTurnState )
             {
-            case CTcgBattleField.TurnState.iBattleStart:
+            case CTcgBattleField.TurnState.iBattleStart_Start:
+            case CTcgBattleField.TurnState.iBattleStart_End:
                 sTmp += "BattleStart";
                 break;
-            case CTcgBattleField.TurnState.iRefreshState:
+            case CTcgBattleField.TurnState.iRefreshState_Start:
+            case CTcgBattleField.TurnState.iRefreshState_End:
                 sTmp += "RefreshState";
                 break;
-            case CTcgBattleField.TurnState.iDrawState:
+            case CTcgBattleField.TurnState.iDrawState_Start:
+            case CTcgBattleField.TurnState.iDrawState_End:
                 sTmp += "DrawState";
                 break;
-            case CTcgBattleField.TurnState.iMainState:
+            case CTcgBattleField.TurnState.iMainState_Start:
+            case CTcgBattleField.TurnState.iMainState_End:
                 sTmp += "MainState";
                 break;
-            case CTcgBattleField.TurnState.iBattleState:
+            case CTcgBattleField.TurnState.iBattleState_Start:
+            case CTcgBattleField.TurnState.iBattleState_End:
                 sTmp += "BattleState";
                 break;
             case CTcgBattleField.TurnState.iEndState:
@@ -433,12 +488,17 @@ CTcgBattleField.OwnerNumber = {
  */
 CTcgBattleField.TurnState = {
   iNoneState: -1,
-  iBattleStart: 0,
-  iRefreshState: 1,
-  iDrawState: 2,
-  iMainState: 3,
-  iBattleState: 4,
-  iEndState: 5
+  iBattleStart_Start: 0,
+  iBattleStart_End: 1,
+  iRefreshState_Start: 2,
+  iRefreshState_End: 3,
+  iDrawState_Start: 4,
+  iDrawState_End: 5,
+  iMainState_Start: 6,
+  iMainState_End: 7,
+  iBattleState_Start: 8,
+  iBattleState_End: 9,
+  iEndState: 10
 };
 
 /**
