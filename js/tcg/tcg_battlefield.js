@@ -52,10 +52,16 @@ var CTcgBattleField = function()
         tmp.y = 400;
         this._scene.addChild( tmp );
         
-        // エンティティの追加（コア）
+        // エンティティの追加（リザーブコア）
         tmp = this._params._SPlayerA_Params._groupCoreField;
         tmp.x = 400;
         tmp.y = 370;
+        this._scene.addChild( tmp );
+        
+        // エンティティの追加（トラッシュコア）
+        tmp = this._params._SPlayerA_Params._groupCoreTrash;
+        tmp.x = 400;
+        tmp.y = 400;
         this._scene.addChild( tmp );
         
         // エンティティの追加（フィールド）
@@ -98,6 +104,11 @@ var CTcgBattleField = function()
             var _tmp;
             var _params = this._params;
             
+            // ターンオーナー
+            var _owner = this._params._SPlayerA_Params;
+            if ( _params._iOwnerState === CTcgBattleField.OwnerNumber.iPlayerA ) _owner = this._params._SPlayerA_Params;
+            else _owner = this._params._SPlayerB_Params;
+
             switch( _params._iTurnState )
             {
                 // 対戦開始ステート
@@ -161,6 +172,7 @@ var CTcgBattleField = function()
                     _params._scene.addChild( _tmp );
 
                     // リフレッシュ処理
+                    _owner.MoveCoreReserveFromTrash();
                     
                     // 次のステートに進む
                     _params._iTurnState = CTcgBattleField.TurnState.iRefreshState_End;
@@ -200,9 +212,6 @@ var CTcgBattleField = function()
 
                     // 山札からカードを一枚引く
                     /*
-                    this._params._SPlayerA_Params.PicCardFromLibrary();
-                    this._params._SPlayerA_Params.ReplaceCardHand();
-                            */
                     if ( _params._iOwnerState === CTcgBattleField.OwnerNumber.iPlayerA )
                     {
                         this._params._SPlayerA_Params.PicCardFromLibrary();
@@ -213,6 +222,9 @@ var CTcgBattleField = function()
                         this._params._SPlayerB_Params.PicCardFromLibrary();
                         this._params._SPlayerB_Params.ReplaceCardHand();
                     }
+                            */
+                    _owner.PicCardFromLibrary();
+                    _owner.ReplaceCardHand();
                     
                     // 次のステートに進む
                     _params._iTurnState = CTcgBattleField.TurnState.iDrawState_End;
