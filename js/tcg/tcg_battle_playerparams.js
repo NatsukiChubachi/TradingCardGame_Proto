@@ -214,10 +214,7 @@ CTcgBattlePlayerParams.prototype.PicCardFromLibrary = function()
                 var _groupCoreTrash = this._params._owner._groupCoreTrash;
 
                 // コアの消費
-                var _targetCore = _groupCoreField.childNodes[0];
-                _groupCoreTrash.addChild( _targetCore );
-                _groupCoreField.removeChild( _targetCore );
-                //_groupCoreField.removeChild( _groupCoreField.childNodes[0] );
+                this._params._owner.MoveCoreTrashFromReserve();
                 
                 // 手札から場に出す
                 var _targetCard = this._params._owner._PicCardObject;
@@ -409,7 +406,22 @@ CTcgBattlePlayerParams.prototype.MoveCoreReserveFromTrash = function()
         this._groupCoreField.addChild( _tmp );
         this._groupCoreTrash.removeChild( _tmp );
     }
-}
+};
+
+/**
+ * リザーブからコアをトラッシュに移動する
+ * コアの消費
+ * @returns {undefined}
+ */
+CTcgBattlePlayerParams.prototype.MoveCoreTrashFromReserve = function()
+{
+    // コアの消費
+    var _targetCore = this._groupCoreField.childNodes[0];
+    this._groupCoreTrash.addChild( _targetCore );
+    this._groupCoreField.removeChild( _targetCore );
+};
+
+
 
 
 
