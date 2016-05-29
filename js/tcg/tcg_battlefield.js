@@ -70,7 +70,7 @@ var CTcgBattleField = function()
         tmp.y = 300;
         this._scene.addChild( tmp );
         
-        // エンティティの追加（フィールド）
+        // エンティティの追加（ライフカウンター）
         tmp = this._params._SPlayerA_Params._groupLifeCounter;
         tmp.x = 50;
         tmp.y = 300;
@@ -88,6 +88,12 @@ var CTcgBattleField = function()
         this._lblLifeA = this.CreateLabel( 10, 450, "Player_A Life = " + this._params._SPlayerA_Params._iLife_Now );
         this._lblLifeB = this.CreateLabel( 10, 470, "Player_B Life = " + this._params._SPlayerB_Params._iLife_Now );
 
+        // エンティティの追加（ライフカウンター）
+        tmp = this._params._SPlayerB_Params._groupLifeCounter;
+        tmp.x = 400;
+        tmp.y = 50;
+        this._scene.addChild( tmp );
+        
         // ゲームマネージャーの作成
         this._manager = _gCommon.CreateGroup( -100, -100 );
         this._manager._params = this._params;
@@ -310,6 +316,9 @@ var CTcgBattleField = function()
                     // 次のステートに進む        
                     _params._iTurnState = CTcgBattleField.TurnState.iBattleState_End;
                     _params._bStateMove = false;
+                    
+                    // フィールドカードのイベントを初期化する
+                    _owner.AddCommandFieldCard();
                 }
                 break;
             case CTcgBattleField.TurnState.iBattleState_End:

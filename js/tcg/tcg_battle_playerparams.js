@@ -187,6 +187,8 @@ CTcgBattlePlayerParams.prototype.PicCardFromLibrary = function()
         var _iPosX = 170;
         var _iPosY = 10;
         
+        // メインステート時
+        // スピリット、エンチャント
         // 「場に出す」ボタン
         if ( _gManage._params._iTurnState === CTcgBattleField.TurnState.iMainState_End &&
                 iGrayCost <= this._parent._params._owner._CoreReserve
@@ -234,6 +236,19 @@ CTcgBattlePlayerParams.prototype.PicCardFromLibrary = function()
             _iPosY += 40;
         }        
         
+        // メイン、バトルステート時
+        // マジックカードの場合
+        // 「使用」ボタン
+        if ( _gManage._params._iTurnState === CTcgBattleField.TurnState.iMainState_End ||
+                _gManage._params._iTurnState === CTcgBattleField.TurnState.iBattleState_End 
+                )
+        {
+            if ( iGrayCost <= this._parent._params._owner._CoreReserve )
+            {
+                // コストが足りている場合のみ
+            }    
+        }
+            
         // 「閉じる」ボタン
         if ( _gManage._params._iTurnState !== CTcgBattleField.TurnState.iNoneState )
         {
@@ -345,7 +360,7 @@ CTcgBattlePlayerParams.prototype.InitializeCoreField = function()
 CTcgBattlePlayerParams.prototype.InitializeCardField = function()
 {
     var tmp = null;
-
+/*
     var img = _gCommon.CreateSurface( 280, 80 );
     
     tmp = _gCommon.CreateSprite( 0, 0, 280, 80, img );
@@ -353,6 +368,7 @@ CTcgBattlePlayerParams.prototype.InitializeCardField = function()
     
     tmp = _gCommon.CreateLabel( 0, 0, "CardField" );
     this._groupCardField.addChild( tmp );
+*/
 };
 
 /**
@@ -421,6 +437,161 @@ CTcgBattlePlayerParams.prototype.MoveCoreTrashFromReserve = function()
     this._groupCoreField.removeChild( _targetCore );
 };
 
+/**
+ * フィールドのカードにコマンドを付与する
+ * @returns {undefined}
+ */
+CTcgBattlePlayerParams.prototype.AddCommandFieldCard = function()
+{
+    var _iCount = this._groupCardField.childNodes.length;
+    for ( var _i = 0; _i < _iCount; _i++ )
+    {
+        var _card = this._groupCardField.childNodes[_i];
+        
+        // イベントの削除
+        _card.clearEventListener("touchstart");
+        _card._sprite.clearEventListener("touchstart");
+        
+        // イベントの追加
+        _card._sprite.addEventListener("touchstart", function()
+        {
+            // マネージャクラスがカードオープンを行うかどうかを判断する
+            if ( _gManage._params._bOpenCard === true ) return;
+            _gManage._params._bOpenCard = true;
+
+            // 選択したカードオブジェクトを取得する
+            this._parent._params._owner._PicCardObject = this._parent;
+
+            var _parent = this._parent;
+            var _img, _tmp;
+            var _tmpGroup = _gCommon.CreateGroup( -50, -100 );
+
+            _img = _gCommon.CreateSurface( 150, 150 );
+            _tmp = _gCommon.CreateSprite( 0, 0, 150, 150, _img );
+            _tmpGroup.addChild( _tmp );
+            var _tmpSprite = _tmp;
+
+            var iCardId = _parent._params._iCardId;
+            var sName = _gCardData[ iCardId ]._sName;
+            var iCategory = _gCardData[ iCardId ]._iCategory;
+            var iLife = _gCardData[ iCardId ]._iLife;
+            var iAtk = _gCardData[ iCardId ]._iAtk;
+            var sText = _gCardData[ iCardId ]._sText;
+            var iGrayCost = _gCardData[ iCardId ]._iGrayCost;
+
+            _tmp = _gCommon.CreateLabel( 0, 0, "id: " + iCardId );
+            _tmpGroup.addChild( _tmp );
+
+            _tmp = _gCommon.CreateLabel( 0, 20, "name: " + sName );
+            _tmpGroup.addChild( _tmp );
+
+            _tmp = _gCommon.CreateLabel( 0, 40, "種別: " + _gCardCategory[ iCategory ] );
+            _tmpGroup.addChild( _tmp );
+
+            _tmp = _gCommon.CreateLabel( 0, 60, "コスト: " + iGrayCost );
+            _tmpGroup.addChild( _tmp );
+
+            _tmp = _gCommon.CreateLabel( 0, 80, "" + iAtk + " / " + iLife );
+            _tmpGroup.addChild( _tmp );
+
+            _tmp = _gCommon.CreateLabel( 0, 100, sText );
+            _tmpGroup.addChild( _tmp );
+
+            this._groupCardField.addChild( _tmpGroup );
+        
+            // 開かれたカードを再度クリックで閉じるようにする
+            _tmpSprite._params = {};
+            _tmpSprite._params._group = _tmpGroup;
+            _tmpSprite._params._parent = this._groupCardField;
+            _tmpSprite._params._card = this._parent;
+            _tmpSprite.addEventListener( "touchstart", function(){
+                _gManage._params._bOpenCard = false;
+                this._params._parent.removeChild( this._params._group );
+            });
+
+            // todo: 状況によって選択できるかどうか変化する？
+            var _iPosX = 170;
+            var _iPosY = 10;
+
+            // 「アタック」ボタン
+            if ( 
+                _gManage._params._iTurnState === CTcgBattleField.TurnState.iBattleState_End
+            )
+            {
+                // 「場に出す」ボタン
+                _tmpSprite = _gCommon.CreateSprite( _iPosX, _iPosY, 50, 30, _gCommon.CreateSurface( 50, 50 ) )
+                _tmpSprite._params = {};
+                _tmpSprite._params._group = _tmpGroup;
+                _tmpSprite._params._parent = this._groupCardField;
+                _tmpSprite._params._owner = this._parent._params._owner;
+                _tmpGroup.addChild( _tmpSprite );
+
+                _tmp = _gCommon.CreateLabel( _tmpSprite.x + 5, _tmpSprite.y + 5, "アタック" );
+                _tmp._params = _tmpSprite._params;
+                _tmpGroup.addChild( _tmp );
+
+                var _func = function() {
+
+                    var _groupCardHand = this._params._owner._groupCardHand;
+                    var _groupCardField = this._params._owner._groupCardField;
+                    var _groupCoreField = this._params._owner._groupCoreField;
+                    var _groupCoreTrash = this._params._owner._groupCoreTrash;
+
+                    // アタック処理
+                    var _card = this.parentNode;
+                    _card.tl.clear();
+                    _card.tl.rotateTo( 0, 0 ).rotateTo( 90, 15 );
+/*
+                    // 表示したカード画面を閉じる
+                    _gManage._params._bOpenCard = false;
+                    this._params._parent.removeChild( this._params._group );
+                    */
+                };
+
+                _tmpSprite.addEventListener( "touchstart", _func );
+                _tmp.addEventListener( "touchstart", _func );
+
+                _iPosY += 40;
+            }        
+
+            // 「能力」ボタン
+            if ( _gManage._params._iTurnState === CTcgBattleField.TurnState.iMainState_End ||
+                    _gManage._params._iTurnState === CTcgBattleField.TurnState.iBattleState_End 
+                    )
+            {
+                if ( iGrayCost <= this._parent._params._owner._CoreReserve )
+                {
+                    // コストが足りている場合のみ
+                }    
+            }
+
+            // 「閉じる」ボタン
+            if ( _gManage._params._iTurnState !== CTcgBattleField.TurnState.iNoneState )
+            {
+                // 「閉じる」ボタン
+                _tmpSprite = _gCommon.CreateSprite( _iPosX, _iPosY, 50, 30, _gCommon.CreateSurface( 50, 50 ) )
+                _tmpSprite._params = {};
+                _tmpSprite._params._group = _tmpGroup;
+                _tmpSprite._params._parent = this._groupCardField;
+                _tmpGroup.addChild( _tmpSprite );
+
+                _tmp = _gCommon.CreateLabel( _tmpSprite.x + 5, _tmpSprite.y + 5, "閉じる" );
+                _tmp._params = _tmpSprite._params;
+                _tmpGroup.addChild( _tmp );
+
+                var _func = function() {
+                    _gManage._params._bOpenCard = false;
+                    this._params._parent.removeChild( this._params._group );
+                };
+
+                _tmpSprite.addEventListener( "touchstart", _func );
+                _tmp.addEventListener( "touchstart", _func );
+
+                _iPosY += 40;
+            }        
+        })
+    }
+};
 
 
 
