@@ -1,4 +1,8 @@
+var _gGame = null;
+var _gCommon = null;
+
 var _gManage = null;
+var _gParams = null;
 
 /**
  * TCG戦場クラス 
@@ -23,7 +27,7 @@ var CTcgBattleField = function()
         // 作成したシーンを追加する
         this._game.pushScene( this._scene );
         
-        // ターン制御変数
+        // ゲーム中パラメータ
         this._params = {};
         this._params._scene = this._scene;
         this._params._iOwnerState = CTcgBattleField.OwnerNumber.iPlayerA;
@@ -31,6 +35,7 @@ var CTcgBattleField = function()
         this._params._bStateMove = false;
         this._params._SPlayerA_Params = new CTcgBattlePlayerParams( this._scene );
         this._params._SPlayerB_Params = new CTcgBattlePlayerParams( this._scene );
+        _gParams = this._params;
 
         var tmp = null;
 
@@ -102,6 +107,8 @@ var CTcgBattleField = function()
         _gManage = this._manager;
         _gManage._params._scene = this._scene;
         _gManage._params._bOpenCard = false;
+        _gManage._params._owner = null;
+        _gManage._params._target = null;
         
         // マネージャ処理
         // 毎ループ判定処理
@@ -110,14 +117,21 @@ var CTcgBattleField = function()
             var _tmp;
             var _params = this._params;
             
-            // ターンオーナー
+            // ターンオーナーとターゲットの決定
             var _owner = this._params._SPlayerA_Params;
-            if ( _params._iOwnerState === CTcgBattleField.OwnerNumber.iPlayerA ) _owner = this._params._SPlayerA_Params;
-            else _owner = this._params._SPlayerB_Params;
+            var _target = this._params._SPlayerB_Params;
+            
+            if ( _params._iOwnerState === CTcgBattleField.OwnerNumber.iPlayerB )
+            {
+                _owner = this._params._SPlayerB_Params;
+                _target = this._params._SPlayerA_Params;
+            }
+            
+            _gManage._params._owner = _owner;
+            _gManage._params._target = _target;
 
             switch( _params._iTurnState )
             {
-                // 対戦開始ステート
                 /**
                  * 対戦開始ステート
                  * このステート開始時にプレイヤーの場（山札、手札、捨札）は初期化される
@@ -135,21 +149,24 @@ var CTcgBattleField = function()
                     _tmp._params._manager = this;
                     _tmp.tl.clear();
                     _tmp.tl.moveTo( -100, 200, 0 )
-                            .moveTo( 250, 200, 30 )
-                            .delay( 90 )
-                            .moveTo( 500, 200, 30 )
+                            .moveTo( 250, 200, 15 )
+                            .delay( 45 )
+                            .moveTo( 500, 200, 15 )
                             .then(function(){
                                 this._params._scene.removeChild( this );
-
+                        
                                 // 次のステートに進む
-                                var _manager = this._params._manager;
-                                _manager._params._iTurnState = CTcgBattleField.TurnState.iRefreshState_Start;
+                                _gManage._params._iTurnState = CTcgBattleField.TurnState.iRefreshState_Start;
+                                _gManage._params._bStateMove = false;
                             });
                     _params._scene.addChild( _tmp );
 
-                    _params._iTurnState = CTcgBattleField.TurnState.iRefreshState_End;
+                    // 次のステートに進む
+                    _params._iTurnState = CTcgBattleField.TurnState.iBattleStart_End;
+                    _params._bStateMove = false;
                 }
                 break;
+                
             case CTcgBattleField.TurnState.iBattleStart_End:
                 break;
 
@@ -169,11 +186,15 @@ var CTcgBattleField = function()
                     _tmp._params._scene = _params._scene;
                     _tmp.tl.clear();
                     _tmp.tl.moveTo( -100, 200, 0 )
-                            .moveTo( 250, 200, 30 )
-                            .delay( 90 )
-                            .moveTo( 500, 200, 30 )
+                            .moveTo( 250, 200, 15 )
+                            .delay( 45 )
+                            .moveTo( 500, 200, 15 )
                             .then(function(){
                                 this._params._scene.removeChild( this );
+                        
+                                // 次のステートに進む
+                                _gManage._params._iTurnState = CTcgBattleField.TurnState.iDrawState_Start;
+                                _gManage._params._bStateMove = false;
                             });
                     _params._scene.addChild( _tmp );
 
@@ -185,13 +206,8 @@ var CTcgBattleField = function()
                     _params._bStateMove = false;
                 }
                 break;
+                
             case CTcgBattleField.TurnState.iRefreshState_End:
-                if ( this._params._bStateMove )
-                {
-                    // 次のステートに進む
-                    _params._iTurnState = CTcgBattleField.TurnState.iDrawState_Start;
-                    _params._bStateMove = false;
-                }
                 break;
 
                 /**
@@ -208,27 +224,19 @@ var CTcgBattleField = function()
                     _tmp._params._scene = _params._scene;
                     _tmp.tl.clear();
                     _tmp.tl.moveTo( -100, 200, 0 )
-                            .moveTo( 250, 200, 30 )
-                            .delay( 90 )
-                            .moveTo( 500, 200, 30 )
+                            .moveTo( 250, 200, 15 )
+                            .delay( 45 )
+                            .moveTo( 500, 200, 15 )
                             .then(function(){
                                 this._params._scene.removeChild( this );
+                        
+                                // 次のステートに進む
+                                _gManage._params._iTurnState = CTcgBattleField.TurnState.iMainState_Start;
+                                _gManage._params._bStateMove = false;
                             });
                     _params._scene.addChild( _tmp );
 
                     // 山札からカードを一枚引く
-                    /*
-                    if ( _params._iOwnerState === CTcgBattleField.OwnerNumber.iPlayerA )
-                    {
-                        this._params._SPlayerA_Params.PicCardFromLibrary();
-                        this._params._SPlayerA_Params.ReplaceCardHand();
-                    }
-                    else
-                    {
-                        this._params._SPlayerB_Params.PicCardFromLibrary();
-                        this._params._SPlayerB_Params.ReplaceCardHand();
-                    }
-                            */
                     _owner.PicCardFromLibrary();
                     _owner.ReplaceCardHand();
                     
@@ -239,12 +247,6 @@ var CTcgBattleField = function()
                 break;
                 
             case CTcgBattleField.TurnState.iDrawState_End:
-                if ( this._params._bStateMove )
-                {
-                    // 次のステートに進む
-                    _params._iTurnState = CTcgBattleField.TurnState.iMainState_Start;
-                    _params._bStateMove = false;
-                }
                 break;
 
                 /**
@@ -266,13 +268,17 @@ var CTcgBattleField = function()
                     _tmp._params._scene = _params._scene;
                     _tmp.tl.clear();
                     _tmp.tl.moveTo( -100, 200, 0 )
-                            .moveTo( 250, 200, 30 )
-                            .delay( 90 )
-                            .moveTo( 500, 200, 30 )
+                            .moveTo( 250, 200, 15 )
+                            .delay( 45 )
+                            .moveTo( 500, 200, 15 )
                             .then(function(){
                                 this._params._scene.removeChild( this );
                             });
                     _params._scene.addChild( _tmp );
+                    
+                    // 手札とフィールドのイベントを初期化する
+                    _owner.AddCommandHandCard();
+                    _owner.AddCommandFieldCard();
                     
                     // 次のステートに進む
                     _params._iTurnState = CTcgBattleField.TurnState.iMainState_End;
@@ -305,9 +311,9 @@ var CTcgBattleField = function()
                     _tmp._params._scene = _params._scene;
                     _tmp.tl.clear();
                     _tmp.tl.moveTo( -100, 200, 0 )
-                            .moveTo( 250, 200, 30 )
-                            .delay( 90 )
-                            .moveTo( 500, 200, 30 )
+                            .moveTo( 250, 200, 15 )
+                            .delay( 45 )
+                            .moveTo( 500, 200, 15 )
                             .then(function(){
                                 this._params._scene.removeChild( this );
                             });
@@ -317,7 +323,8 @@ var CTcgBattleField = function()
                     _params._iTurnState = CTcgBattleField.TurnState.iBattleState_End;
                     _params._bStateMove = false;
                     
-                    // フィールドカードのイベントを初期化する
+                    // 手札とフィールドのイベントを初期化する
+                    _owner.AddCommandHandCard();
                     _owner.AddCommandFieldCard();
                 }
                 break;
@@ -347,9 +354,9 @@ var CTcgBattleField = function()
                     _tmp._params._scene = _params._scene;
                     _tmp.tl.clear();
                     _tmp.tl.moveTo( -100, 200, 0 )
-                            .moveTo( 250, 200, 30 )
-                            .delay( 90 )
-                            .moveTo( 500, 200, 30 )
+                            .moveTo( 250, 200, 15 )
+                            .delay( 45 )
+                            .moveTo( 500, 200, 15 )
                             .then(function(){
                                 this._params._scene.removeChild( this );
                             });
@@ -422,66 +429,6 @@ var CTcgBattleField = function()
         
         // テンポラリ変数
         var tmp;
-        
-        /*
-        // Player_A 手札
-        this.CreateChip( 100, 370 );
-        this.CreateChip( 150, 370 );
-        this.CreateChip( 200, 370 );
-        this.CreateChip( 250, 370 );
-        tmp = this.CreateChip( 300, 370 );
-        tmp._parent = this;
-        tmp.addEventListener("touchstart", function() 
-        {
-          this.y += 1;
-          this._parent._bStateMove = true;
-        });
-        
-        // Player_A 場
-        this.CreateChip( 100, 260 );
-        this.CreateChip( 150, 260 );
-        this.CreateChip( 200, 260 );
-        
-        // Player_A 山札
-        this.CreateChip( 430, 250 );
-        this.CreateChip( 435, 255 );
-        this.CreateChip( 440, 260 );
-
-        // Player_A 捨て山
-        this.CreateChip( 430, 350 );
-       
-        // Player_A プレイヤー情報
-        this.CreateChip( 10, 250 );
-        this.CreateChip( 10, 300 );
-        this.CreateChip( 10, 350 );
-        
-        
-        // Player_B 手札
-        this.CreateChip( 100, 120 - 60 );
-        this.CreateChip( 150, 120 - 60 );
-        this.CreateChip( 200, 120 - 60 );
-        this.CreateChip( 250, 120 - 60 );
-        this.CreateChip( 300, 120 - 60 );
-        
-        // Player_B 場
-        this.CreateChip( 300, 240 - 60 );
-        this.CreateChip( 250, 240 - 60 );
-        this.CreateChip( 200, 240 - 60 );
-        
-        // Player_B 山札
-        this.CreateChip( 30, 250 - 60 );
-        this.CreateChip( 35, 245 - 60 );
-        this.CreateChip( 40, 240 - 60 );
-
-        // Player_B 捨て山
-        this.CreateChip( 30, 150 - 60 );
-        
-        // Player_B プレイヤー情報
-        this.CreateChip( 410, 250 - 60 );
-        this.CreateChip( 410, 200 - 60 );
-        this.CreateChip( 410, 150 - 60 );
-        */
-       
         tmp = this.CreateChip( 450, 200 );
         tmp._params = this._params;
         tmp.addEventListener("touchstart", function() 
